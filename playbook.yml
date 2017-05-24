@@ -1,0 +1,19 @@
+---
+- hosts: all
+  tasks:
+    - name: Download JDK
+      get_url:
+        url: http://download.oracle.com/otn-pub/java/jdk/8u131-b11/d54c1d3a095b4ff2b6607d096fa80163/jdk-8u131-linux-x64.tar.gz
+        headers: "Cookie:oraclelicense=accept-securebackup-cookie"
+        dest: /var/cache/wget/jdk-8u131-linux-x64.tar.gz
+
+    - name: Extract JDK tarball
+      unarchive:
+        src: /var/cache/wget/jdk-8u131-linux-x64.tar.gz
+        dest: /opt
+        creates: /opt/jdk1.8.0_131/
+        remote_src: yes
+
+- hosts: all
+  roles:
+    - role: jboss

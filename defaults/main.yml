@@ -1,0 +1,28 @@
+---
+jboss_java_home: /opt/jdk1.8.0_131/
+jboss_home: /opt/wildfly
+jboss_user: wildfly
+jboss_group: wildfly
+jboss_service: wildfly
+jboss_install_src: http://download.jboss.org/wildfly/10.1.0.Final/wildfly-10.1.0.Final.tar.gz
+jboss_config: standalone.xml
+jboss_mode: standalone
+jboss_domain_config: domain.xml
+jboss_host_config: host.xml
+jboss_startup_wait: 30
+jboss_shutdown_wait: 30
+jboss_console_log: /var/log/wildfly/console.log
+jboss_mgmt_user: ansible
+jboss_mgmt_password: ansible
+jboss_xms: 64m
+jboss_xmx: 512m
+jboss_opts: ''
+jboss_java_opts: ''
+jboss_properties:
+  jboss.bind.address: 0.0.0.0
+  jboss.bind.address.management: 127.0.0.1
+  jboss.management.http.port: 9990
+  jboss.management.https.port: 9993
+  jboss.http.port: 8080
+  jboss.https.port: 8443
+  jboss.ajp.port: 8009

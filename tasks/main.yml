@@ -1,0 +1,83 @@
+---
+- name: OS user
+  user:
+    name: "{{ jboss_user }}"
+
+- name: OS group
+  group:
+    name: "{{ jboss_group }}"
+
+- name: JBoss home dir
+  file:
+    path: "{{ jboss_home }}"
+    owner: "{{ jboss_user }}"
+    group: "{{ jboss_group }}"
+    state: directory
+    mode: 0755
+
+- name: Extract Tarball
+  unarchive:
+    src: "{{ jboss_install_src }}"
+    dest: "{{ jboss_home }}"
+    extra_opts:
+      - "--no-same-owner"
+      - "--no-same-permissions"
+      - "--strip-components=1"
+    creates: "{{ jboss_home }}/jboss-modules.jar"
+    owner: "{{ jboss_user }}"
+    group: "{{ jboss_group }}"
+    remote_src: yes
+
+- name: Management Realm user
+  lineinfile:
+    path: "{{ jboss_home }}/{{ jboss_mode }}/configuration/mgmt-users.properties"
+    line: "{{ jboss_mgmt_user }}={{ [jboss_mgmt_user, 'ManagementRealm', jboss_mgmt_password] | join(':') | hash('md5') }}"
+    regexp: "^{{ jboss_mgmt_user }}="
+    owner: "{{ jboss_user }}"
+    group: "{{ jboss_group }}"
+    mode: 0644
+  notify:
+    - restart jboss
+
+- name: JBoss properties (binding addresses, ports, etc)
+  template:
+    src: jboss.properties.j2
+    dest: "{{ jboss_home }}/jboss.properties"
+    owner: "{{ jboss_user }}"
+    group: "{{ jboss_group }}"
+    mode: 0644
+  notify:
+    - restart jboss
+
+- name: "JBoss {{ jboss_mode }}.conf"
+  template:
+    src: "{{ jboss_mode }}.conf.j2"
+    dest: "{{ jboss_home }}/bin/{{ jboss_mode }}.conf"
+    owner: "{{ jboss_user }}"
+    group: "{{ jboss_group }}"
+    mode: 0644
+  notify:
+    - restart jboss
+
+- name: JBoss sysvinit script
+  file:
+    path: "/etc/init.d/{{ jboss_service }}"
+    state: link
+    src: "{{ jboss_home }}/docs/contrib/scripts/init.d/wildfly-init-{{ ansible_os_family | lower }}.sh"
+
+- name: JBoss init configuration file (JAVA_HOME, JBOSS_CONFIG, etc)
+  template:
+    src: jboss.conf.j2
+    dest: "/etc/default/{{ jboss_service }}"
+  notify:
+    - restart jboss
+
+- name: JBoss service
+  service:
+    name: "{{ jboss_service }}"
+    state: started
+    enabled: yes
+
+- name: Init system
+  debug:
+    msg: "{{ ansible_service_mgr }}"

@@ -1,0 +1,44 @@
+# General configuration for the init.d scripts,
+# not necessarily for JBoss AS itself.
+# default location: /etc/default/wildfly
+
+# Location of JDK
+#
+JAVA_HOME="{{ jboss_java_home }}"
+
+# Location of WildFly
+#
+JBOSS_HOME="{{ jboss_home }}"
+
+# The username who should own the process.
+#
+JBOSS_USER="{{ jboss_user }}"
+
+# The mode WildFly should start, standalone or domain
+#
+JBOSS_MODE="{{ jboss_group }}"
+
+# Configuration for standalone mode
+#
+JBOSS_CONFIG="{{ jboss_config }} -P {{ jboss_home }}/jboss.properties"
+
+# Configuration for domain mode
+#
+JBOSS_DOMAIN_CONFIG="{{ jboss_domain_config }}"
+JBOSS_HOST_CONFIG="{{ jboss_host_config }} -P {{ jboss_home }}/jboss.properties"
+
+# The amount of time to wait for startup
+#
+STARTUP_WAIT="{{ jboss_startup_wait }}"
+
+# The amount of time to wait for shutdown
+#
+SHUTDOWN_WAIT="{{ jboss_shutdown_wait }}"
+
+# Location to keep the console log
+#
+JBOSS_CONSOLE_LOG="{{ jboss_console_log }}"
+
+# Startup script options
+#
+JBOSS_OPTS="{{ jboss_opts }}"

@@ -1,0 +1,26 @@
+galaxy_info:
+  author: jairojunior
+  description: JBoss EAP, Wildfly and JBoss-based products
+  license: license (Apache)
+  min_ansible_version: 2.3
+  platforms:
+  - name: Ubuntu
+    versions:
+    - lucid
+    - precise
+    - trusty
+    - xenial
+  - name: Debian
+    versions:
+    - squeeze
+    - wheezy
+    - jessie
+  - name: EL
+    versions:
+    - 5
+    - 6
+    - 7
+  galaxy_tags:
+    - jboss
+    - wildfly
+    - java
