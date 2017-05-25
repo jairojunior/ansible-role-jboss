@@ -17,3 +17,22 @@
 - hosts: all
   roles:
     - role: jboss
+
+- hosts: all
+  tasks:
+    - name: Configure datasource
+      jboss_resource:
+        name: "/subsystem=datasources/data-source=DemoDS"
+        state: present
+        attributes:
+          driver-name: h2
+          connection-url: "jdbc:h2:mem:demo;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+          jndi-name: "java:jboss/datasources/DemoDS"
+          user-name: sa
+          password: sa
+          min-pool-size: 10
+          max-pool-size: 30
+      register: result
+
+    - debug:
+        msg: "{{ result }}"
