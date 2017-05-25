@@ -59,12 +59,6 @@
   notify:
     - restart jboss
 
-- name: JBoss sysvinit script
-  file:
-    path: "/etc/init.d/{{ jboss_service }}"
-    state: link
-    src: "{{ jboss_home }}/docs/contrib/scripts/init.d/wildfly-init-{{ ansible_os_family | lower }}.sh"
-
 - name: JBoss init configuration file (JAVA_HOME, JBOSS_CONFIG, etc)
   template:
     src: jboss.conf.j2
@@ -72,12 +66,23 @@
   notify:
     - restart jboss
 
+- name: JBoss sysvinit script
+  file:
+    path: "/etc/init.d/{{ jboss_service }}"
+    state: link
+    src: "{{ jboss_home }}/docs/contrib/scripts/init.d/wildfly-init-{{ ansible_os_family | lower }}.sh"
+
+- name: "JBoss systemd wrapper for sysvinit script"
+  template:
+    src: jboss.sysvinit.service.j2
+    dest: "/etc/systemd/system/{{ jboss_service }}.service"
+    owner: "{{ jboss_user }}"
+    group: "{{ jboss_group }}"
+    mode: 0644
+  when: ansible_service_mgr == "systemd"
+
 - name: JBoss service
   service:
     name: "{{ jboss_service }}"
     state: started
     enabled: yes
-
-- name: Init system
-  debug:
-    msg: "{{ ansible_service_mgr }}"

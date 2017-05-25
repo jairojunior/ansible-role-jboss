@@ -6,8 +6,9 @@ driver:
 vagrant:
   platforms:
     - name: trusty64
-      box: trusty64
-      box_url: https://vagrantcloud.com/ubuntu/boxes/trusty64/versions/14.04/providers/virtualbox.box
+      box: ubuntu/trusty64
+    - name: jessie64
+      box: debian/jessie64
   providers:
     - name: virtualbox
       type: virtualbox
