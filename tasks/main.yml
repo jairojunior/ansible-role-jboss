@@ -15,7 +15,7 @@
     state: directory
     mode: 0755
 
-- name: Extract Tarball
+- name: Download and Extract Tarball
   unarchive:
     src: "{{ jboss_install_src }}"
     dest: "{{ jboss_home }}"
@@ -33,9 +33,6 @@
     path: "{{ jboss_home }}/{{ jboss_mode }}/configuration/mgmt-users.properties"
     line: "{{ jboss_mgmt_user }}={{ [jboss_mgmt_user, 'ManagementRealm', jboss_mgmt_password] | join(':') | hash('md5') }}"
     regexp: "^{{ jboss_mgmt_user }}="
-    owner: "{{ jboss_user }}"
-    group: "{{ jboss_group }}"
-    mode: 0644
   notify:
     - restart jboss
 
