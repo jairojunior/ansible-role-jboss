@@ -83,3 +83,11 @@
     name: "{{ jboss_service }}"
     state: started
     enabled: yes
+
+- name: Python pip
+  apt:
+    name: python-pip
+
+- name: jboss modules requirement
+  pip:
+    name: requests
