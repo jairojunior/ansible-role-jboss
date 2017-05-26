@@ -1,11 +1,7 @@
 #!/usr/bin/python
 
-import jboss_resource
+import json
 from ansible.module_utils.basic import AnsibleModule
-
-
-def execute(command):
-    jboss_resource.management_request({})
 
 
 def main():
@@ -15,12 +11,19 @@ def main():
         ),
     )
 
-    is_error, result = execute(module.params['command'])
+    command = module.params['command']
 
-    if not is_error:
-        module.exit_json(meta=result)
-    else:
-        module.fail_json(msg="Error", meta=result)
+    exit_code, out, err = module.run_command(
+        'jboss-cli.sh -c ' + "'" + command + "'")
+
+    module.exit_json(
+        cmd=command,
+        stdout=out,
+        stderr=err,
+        rc=exit_code,
+        meta=json.loads(out.replace('=>', ':')),
+        changed=True
+    )
 
 
 if __name__ == '__main__':
