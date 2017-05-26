@@ -3,6 +3,13 @@ dependency:
   name: galaxy
 driver:
   name: vagrant
+docker:
+  containers:
+    - name: ubuntu-1404
+      ansible_groups:
+      - group1
+      image: ubuntu
+      image_version: 14.04
 vagrant:
   platforms:
     - name: trusty64
