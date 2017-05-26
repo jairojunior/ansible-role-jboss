@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/jairojunior/ansible-role-jboss.svg?branch=master)](https://travis-ci.org/jairojunior/ansible-role-jboss) [![Code Climate](https://codeclimate.com/github/jairojunior/ansible-role-jboss/badges/gpa.svg)](https://codeclimate.com/github/jairojunior/ansible-role-jboss)
+
 jboss
 =========
 
@@ -6,7 +8,7 @@ This role installs and configures JBoss EAP (6.1+/7.0+), Wildfly (8/9/10), and p
 Requirements
 ------------
 
-This role requires Ansible 2.3+ and a installed JDK - just need to be there - no need to update alternatives, set environments variables or anything.
+This role requires Ansible 2.3+ and a JRE/JDK - just need to be there - no need to update alternatives, set environments variables or anything.
 
 Role Variables
 --------------
@@ -86,11 +88,11 @@ Domain mode
 License
 -------
 
-Apache
+Apache-2.0
 
 Author Information
 ------------------
 
 Jairo Junior (junior.jairo1@gmail.com) - Core committer of a Puppet "Approved" module for JBoss/Wildfly. [biemond/wildfly](https://github.com/biemond/biemond-wildfly)
 
-Lots of the ideas employed here are inspired by what I learned maintaining the module above.
+Lots of the ideas employed here are inspired by what I learned developing/maintaining the module above.
