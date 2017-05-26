@@ -44,10 +44,6 @@
       pip:
         name: requests
 
-    - name: maven_artifact requirement python-lxml
-      apt:
-        name: python-lxml
-
     - name: Configure datasource
       jboss_resource:
         name: "/subsystem=datasources/data-source=DemoDS"
@@ -80,12 +76,11 @@
       when: check_enabled.meta.result == False
 
     - name: Download hawt.io
-      maven_artifact:
-        group_id: io.hawt
-        artifact_id: hawtio-web
-        version: 1.5.0
-        extension: war
+      get_url:
+        url: http://central.maven.org/maven2/io/hawt/hawtio-web/1.5.0/hawtio-web-1.5.0.war
         dest: /opt/hawtio.war
+        mode: 0655
+        checksum: sha256:fddd0f2320d79ad16a29b557e30fc94bba0ec4f3e51ee2377dd42d9ff0cfb78f
 
     - name: Deploy hawt.io
       jboss_deployment:
