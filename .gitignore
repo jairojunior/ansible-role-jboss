@@ -1,0 +1,7 @@
+Session.vim
+*.swp
+*.pyc
+.vagrant
+.molecule
+__pycache_
+*.log
