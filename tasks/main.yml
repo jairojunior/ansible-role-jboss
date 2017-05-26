@@ -1,9 +1,9 @@
 ---
-- name: OS user
+- name: JBoss OS user
   user:
     name: "{{ jboss_user }}"
 
-- name: OS group
+- name: JBoss OS group
   group:
     name: "{{ jboss_group }}"
 
@@ -83,11 +83,3 @@
     name: "{{ jboss_service }}"
     state: started
     enabled: yes
-
-- name: Python pip
-  apt:
-    name: python-pip
-
-- name: jboss modules requirement
-  pip:
-    name: requests
