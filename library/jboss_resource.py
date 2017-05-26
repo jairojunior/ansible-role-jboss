@@ -1,18 +1,18 @@
 #!/usr/bin/python
 
-import requests
 import json
 import logging
-from ansible.module_utils.basic import AnsibleModule
+import requests
 from requests.auth import HTTPDigestAuth
+from ansible.module_utils.basic import AnsibleModule
 
 
 def management_request(payload):
     url = 'http://127.0.0.1:9990/management'
     headers = {'Content-Type': 'application/json'}
     return requests.post(
-            url, data=json.dumps(payload), headers=headers,
-            auth=HTTPDigestAuth('ansible', 'ansible'))
+        url, data=json.dumps(payload), headers=headers,
+        auth=HTTPDigestAuth('ansible', 'ansible'))
 
 
 def to_address(path):
@@ -29,10 +29,10 @@ def to_address(path):
 def intersect(current, desired):
     managed_state = {}
 
-    for key, value in desired.items():
+    for key in desired:
         current_value = current[key]
 
-        if type(current_value) is unicode:
+        if isinstance(current_value, unicode):
             current_value = current_value.encode('utf-8')
 
         managed_state[key] = current_value
@@ -72,19 +72,19 @@ def present(data):
         current_attributes = response['result']
 
         current_managed_attributes = intersect(
-                current_attributes, desired_attributes)
+            current_attributes, desired_attributes)
 
         logging.debug(
-                "Current: " + str(current_managed_attributes) +
-                "Desired: " + str(desired_attributes))
+            "Current: " + str(current_managed_attributes) +
+            "Desired: " + str(desired_attributes))
 
         if current_managed_attributes == desired_attributes:
             return False, False, current_attributes
-        else:
-            return False, True, current_attributes
-    else:
-        create(path, desired_attributes)
-        return False, True, 'Added ' + path
+
+        return False, True, current_attributes
+
+    create(path, desired_attributes)
+    return False, True, 'Added ' + path
 
 
 def absent(data):
@@ -98,18 +98,17 @@ def absent(data):
         management_request(payload)
 
         return False, True, 'Removed ' + path
-    else:
-        return False, False, path + ' is absent'
+
+    return False, False, path + ' is absent'
 
 
 def main():
-
     module = AnsibleModule(
-            argument_spec=dict(
-                state=dict(choices=['present', 'absent'], default='present'),
-                name=dict(aliases=['path'], required=True, type='str'),
-                attributes=dict(required=False, type='dict'),
-            ),
+        argument_spec=dict(
+            state=dict(choices=['present', 'absent'], default='present'),
+            name=dict(aliases=['path'], required=True, type='str'),
+            attributes=dict(required=False, type='dict'),
+        ),
     )
 
     logging.basicConfig(filename='/tmp/ansible.log', level=logging.DEBUG)
@@ -117,7 +116,7 @@ def main():
     choice = {'present': present, 'absent': absent}
 
     is_error, has_changed, result = choice[module.params['state']](
-            module.params)
+        module.params)
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)
