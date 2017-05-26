@@ -6,6 +6,10 @@
         name: ca-certificates
         update_cache: yes
 
+    - name: Install curl
+      apt:
+        name: curl
+
     - name: wget cache dir
       file:
         path: /var/cache/wget
