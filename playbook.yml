@@ -1,29 +1,28 @@
 ---
 - hosts: all
   tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
     - name: CA Certificates
       apt:
         name: ca-certificates
-        update_cache: yes
 
     - name: Install curl
       apt:
         name: curl
 
-    - name: wget cache dir
-      file:
-        path: /var/cache/wget
-        state: directory
-
     - name: Download JDK
       get_url:
         url: http://download.oracle.com/otn-pub/java/jdk/8u131-b11/d54c1d3a095b4ff2b6607d096fa80163/jdk-8u131-linux-x64.tar.gz
         headers: "Cookie:oraclelicense=accept-securebackup-cookie"
-        dest: /var/cache/wget/jdk-8u131-linux-x64.tar.gz
+        dest: /tmp/jdk-8u131-linux-x64.tar.gz
 
     - name: Extract JDK tarball
       unarchive:
-        src: /var/cache/wget/jdk-8u131-linux-x64.tar.gz
+        src: /tmp/jdk-8u131-linux-x64.tar.gz
         dest: /opt
         creates: /opt/jdk1.8.0_131/
         remote_src: yes
@@ -33,7 +32,22 @@
     - role: ansible-role-jboss
 
 - hosts: all
+  environment:
+    JAVA_HOME: /opt/jdk1.8.0_131/
+    PATH: "/opt/wildfly/bin:/bin:/usr/bin:/sbin"
   tasks:
+    - name: Python pip
+      apt:
+        name: python-pip
+
+    - name: jboss modules requirement
+      pip:
+        name: requests
+
+    - name: maven_artifact requirement python-lxml
+      apt:
+        name: python-lxml
+
     - name: Configure datasource
       jboss_resource:
         name: "/subsystem=datasources/data-source=DemoDS"
@@ -50,3 +64,35 @@
 
     - debug:
         msg: "{{ result }}"
+
+    - name: Check datasource is enabled
+      jboss_cli:
+        command: "/subsystem=datasources/data-source=DemoDS:read-attribute(name=enabled)"
+      register: check_enabled
+      changed_when: False
+
+    - debug:
+        msg: "{{ check_enabled.meta.result }}"
+
+    - name: Enable datasource
+      jboss_cli:
+        command: "/subsystem=datasources/data-source=DemoDS:enable()"
+      when: check_enabled.meta.result == False
+
+    - name: Download hawt.io
+      maven_artifact:
+        group_id: io.hawt
+        artifact_id: hawtio-web
+        version: 1.5.0
+        extension: war
+        dest: /opt/hawtio.war
+
+    - name: Deploy hawt.io
+      jboss_deployment:
+        name: hawtio.war
+        state: present
+        src: /opt/hawtio.war
+      register: deploy
+
+    - debug:
+        msg: "{{  deploy }}"
