@@ -40,9 +40,9 @@
       apt:
         name: python-pip
 
-    - name: jboss modules requirement
+    - name: jboss-py
       pip:
-        name: requests
+        name: https://github.com/jairojunior/jboss-py/archive/master.zip
 
     - name: Configure datasource
       jboss_resource:
@@ -61,19 +61,19 @@
     - debug:
         msg: "{{ result }}"
 
-    - name: Check datasource is enabled
+    - name: Check server-state
       jboss_cli:
-        command: "/subsystem=datasources/data-source=DemoDS:read-attribute(name=enabled)"
-      register: check_enabled
+        command: ":read-attribute(name=server-state)"
+      register: server_state
       changed_when: False
 
     - debug:
-        msg: "{{ check_enabled.meta.result }}"
+        msg: "{{ server_state.meta.result }}"
 
-    - name: Enable datasource
+    - name: Reload server
       jboss_cli:
-        command: "/subsystem=datasources/data-source=DemoDS:enable()"
-      when: check_enabled.meta.result == False
+        command: ":reload"
+      when: server_state.meta.result == "reload-required"
 
     - name: Download hawt.io
       get_url:

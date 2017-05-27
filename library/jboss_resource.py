@@ -1,29 +1,7 @@
 #!/usr/bin/python
 
-import json
-import logging
-import requests
-from requests.auth import HTTPDigestAuth
+from jboss.client import Client
 from ansible.module_utils.basic import AnsibleModule
-
-
-def management_request(payload):
-    url = 'http://127.0.0.1:9990/management'
-    headers = {'Content-Type': 'application/json'}
-    return requests.post(
-        url, data=json.dumps(payload), headers=headers,
-        auth=HTTPDigestAuth('ansible', 'ansible'))
-
-
-def to_address(path):
-    tokens = path.split('/')
-
-    address = []
-
-    for token in tokens[1:]:
-        node_type, node_value = token.split('=')
-        address.append({node_type: node_value})
-    return address
 
 
 def intersect(current, desired):
@@ -40,66 +18,43 @@ def intersect(current, desired):
     return managed_state
 
 
-def read(path):
-    payload = {'operation': 'read-resource', 'address': to_address(path)}
+def diff(current, desired):
+    attributes_diff = dict()
 
-    response = management_request(payload)
+    for key, value in desired.items():
+        if current[key] is not value:
+            attributes_diff[key] = value
 
-    return response.json()
-
-
-def create(path, attributes):
-    operation = {'operation': 'add', 'address': to_address(path)}
-
-    payload = operation.copy()
-    payload.update(attributes)
-
-    response = management_request(payload)
-
-    return response.json()
+    return attributes_diff
 
 
-def present(data):
-
-    path = data['name']
-    desired_attributes = data['attributes']
-
-    response = read(path)
-
-    logging.debug("Response: " + str(response))
-
-    if response['outcome'] == 'success':
-        current_attributes = response['result']
+def present(client, read_response, data):
+    if read_response['outcome'] == 'success':
+        current_attributes = read_response['result']
+        desired_attributes = data['attributes']
 
         current_managed_attributes = intersect(
             current_attributes, desired_attributes)
 
-        logging.debug(
-            "Current: " + str(current_managed_attributes) +
-            "Desired: " + str(desired_attributes))
-
         if current_managed_attributes == desired_attributes:
             return False, False, current_attributes
 
+        client.update(data['name'],
+                      diff(current_managed_attributes, desired_attributes))
+
         return False, True, current_attributes
 
-    create(path, desired_attributes)
-    return False, True, 'Added ' + path
+    client.add(data['name'], data['attributes'])
+    return False, True, 'Added ' + data['name']
 
 
-def absent(data):
-    path = data['name']
+def absent(client, read_response, data):
+    if read_response['outcome'] == 'success':
+        client.remove(data['name'])
 
-    response = read(path)
+        return False, True, 'Removed ' + data['name']
 
-    if response['outcome'] == 'success':
-        payload = {'operation': 'remove', 'address': to_address(path)}
-
-        management_request(payload)
-
-        return False, True, 'Removed ' + path
-
-    return False, False, path + ' is absent'
+    return False, False, data['name'] + ' is absent'
 
 
 def main():
@@ -111,11 +66,15 @@ def main():
         ),
     )
 
-    logging.basicConfig(filename='/tmp/ansible.log', level=logging.DEBUG)
-
     choice = {'present': present, 'absent': absent}
 
+    client = Client('ansible', 'ansible')
+
+    response = client.read(module.params['name'])
+
     is_error, has_changed, result = choice[module.params['state']](
+        client,
+        response,
         module.params)
 
     if not is_error:
