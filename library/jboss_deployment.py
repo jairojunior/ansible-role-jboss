@@ -2,40 +2,46 @@
 
 import hashlib
 from jboss.client import Client
+from jboss.operation_error import OperationError
 from ansible.module_utils.basic import AnsibleModule
-
-
-def extract_checksum(data):
-    bytes_value = data['result']['content'][0]['hash']['BYTES_VALUE']
-    return bytes_value.decode('base64').encode('hex')
 
 
 def checksum(src):
     return hashlib.sha1(open(src).read()).hexdigest()
 
 
-def present(client, read_response, data):
-    if read_response['outcome'] == 'success':
-        current_checksum = extract_checksum(read_response)
+def read_deployment(client, name):
+    exists, result = client.read('/deployment=' + name)
 
-        desired_checksum = checksum(data['src'])
+    if exists:
+        bytes_value = result['content'][0]['hash']['BYTES_VALUE']
+        result = bytes_value.decode('base64').encode('hex')
+
+    return exists, result
+
+
+def present(client, name, src):
+    exists, current_checksum = read_deployment(client, name)
+    if exists:
+        desired_checksum = checksum(src)
 
         if current_checksum == desired_checksum:
-            return False, False, current_checksum
+            return False, current_checksum
 
-        client.update_deployment(data['name'], data['src'])
-        return False, True, desired_checksum
+        client.update_deployment(name, src)
+        return True, desired_checksum
 
-    client.deploy(data['name'], data['src'])
-    return False, True, 'Deployed ' + data['name']
+    client.deploy(name, src)
+    return True, 'Deployed ' + name
 
 
-def absent(client, read_response, data):
-    if read_response['outcome'] == 'success':
-        client.undeploy(data['name'])
-        return False, True, 'Removed ' + data['name']
+def absent(client, name):
+    exists = read_deployment(client, name)
+    if exists:
+        client.undeploy(name)
+        return True, 'Removed ' + name
 
-    return False, False, 'Deployment absent ' + data['name']
+    return False, 'Deployment absent ' + name
 
 
 def main():
@@ -47,21 +53,19 @@ def main():
         ),
     )
 
-    choice = {'present': present, 'absent': absent}
-
     client = Client('ansible', 'ansible')
 
-    response = client.read('/deployment=' + module.params['name'])
+    try:
+        state = module.params['state']
+        if state == 'present':
+            has_changed, result = present(
+                client, module.params['name'], module.params['src'])
+        else:
+            has_changed, result = absent(client, module.params['name'])
 
-    is_error, has_changed, result = choice[module.params['state']](
-        client,
-        response,
-        module.params)
-
-    if not is_error:
         module.exit_json(changed=has_changed, meta=result)
-    else:
-        module.fail_json(msg="Error", meta=result)
+    except OperationError as err:
+        module.fail_json(msg=str(err))
 
 
 if __name__ == '__main__':

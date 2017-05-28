@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from jboss.client import Client
+from jboss.operation_error import OperationError
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -19,42 +20,45 @@ def intersect(current, desired):
 
 
 def diff(current, desired):
-    attributes_diff = dict()
+    attributes_diff = {}
 
     for key, value in desired.items():
-        if current[key] is not value:
+        if current[key] == value:
             attributes_diff[key] = value
 
     return attributes_diff
 
 
-def present(client, read_response, data):
-    if read_response['outcome'] == 'success':
-        current_attributes = read_response['result']
-        desired_attributes = data['attributes']
+def present(client, path, attributes):
+    exists, current_attributes = client.read(path)
+
+    if exists:
+        desired_attributes = attributes
 
         current_managed_attributes = intersect(
             current_attributes, desired_attributes)
 
         if current_managed_attributes == desired_attributes:
-            return False, False, current_attributes
+            return False, current_attributes
 
-        client.update(data['name'],
+        client.update(path,
                       diff(current_managed_attributes, desired_attributes))
 
-        return False, True, current_attributes
+        return True, current_attributes
 
-    client.add(data['name'], data['attributes'])
-    return False, True, 'Added ' + data['name']
+    client.add(path, attributes)
+    return True, 'Added ' + path
 
 
-def absent(client, read_response, data):
-    if read_response['outcome'] == 'success':
-        client.remove(data['name'])
+def absent(client, path):
+    exists = client.read(path)
 
-        return False, True, 'Removed ' + data['name']
+    if exists:
+        client.remove(path)
 
-    return False, False, data['name'] + ' is absent'
+        return True, 'Removed ' + path
+
+    return False, path + ' is absent'
 
 
 def main():
@@ -66,21 +70,19 @@ def main():
         ),
     )
 
-    choice = {'present': present, 'absent': absent}
-
     client = Client('ansible', 'ansible')
 
-    response = client.read(module.params['name'])
+    try:
+        state = module.params['state']
+        if state == 'present':
+            has_changed, result = present(
+                client, module.params['name'], module.params['attributes'])
+        else:
+            has_changed, result = absent(client, module.params['name'])
 
-    is_error, has_changed, result = choice[module.params['state']](
-        client,
-        response,
-        module.params)
-
-    if not is_error:
         module.exit_json(changed=has_changed, meta=result)
-    else:
-        module.fail_json(msg="Error", meta=result)
+    except OperationError as err:
+        module.fail_json(msg=str(err))
 
 
 if __name__ == '__main__':
