@@ -8,7 +8,7 @@ This role installs and configures JBoss EAP (6.1+/7.0+), Wildfly (8/9/10), and p
 Requirements
 ------------
 
-This role requires Ansible 2.3+ and a JRE/JDK - just need to be there - no need to update alternatives, set environments variables or anything.
+This role requires Ansible 2.3+ and a JRE/JDK - just need to be there - no need to update alternatives, set environment variables or anything.
 
 Role Variables
 --------------
@@ -49,7 +49,7 @@ jboss_properties:
 Dependencies
 ------------
 
-None.
+[jboss-py](https://github.com/jairojunior/jboss-py) and requests(https://github.com/kennethreitz/requests).
 
 Example Playbook
 ----------------
@@ -58,32 +58,83 @@ Including an example of how to use your role (for instance, with variables passe
 
 Standalone mode
 
-    - hosts: servers
-      roles:
-         - role: jairojunior.jboss
-           jboss_config: standalone-ha.xml
+```yaml
+- hosts: servers
+  roles:
+     - role: jairojunior.jboss
+       jboss_config: standalone-ha.xml
+```
 
 Domain mode
 
-    - hosts: domain_controller
-      roles:
-        - role: jairojunior.jboss
-          jboss_mode: domain
-          jboss_host_config: host-master.xml
-          jboss_properties:
-              jboss.bind.address.management: 172.17.0.2
+```yaml
+- hosts: domain_controller
+  roles:
+    - role: jairojunior.jboss
+      jboss_mode: domain
+      jboss_host_config: host-master.xml
+      jboss_properties:
+          jboss.bind.address.management: 172.17.0.2
+```` 
 
+```yaml
+- hosts: host_controllers
+  roles:
+    - role: jairojunior.jboss
+      jboss_mode: domain
+      jboss_host_config: host-slave.xml
+      jboss_remote_username: slave
+      jboss_remote_secret: slave
+      jboss_properties:
+          jboss.domain.master.address: 172.17.0.2
+```
 
-    - hosts: host_controllers
-      roles:
-        - role: jairojunior.jboss
-          jboss_mode: domain
-          jboss_host_config: host-slave.xml
-          jboss_remote_username: slave
-          jboss_remote_secret: slave
-          jboss_properties:
-              jboss.domain.master.address: 172.17.0.2
+Modules examples
+----------------
 
+ ```yaml
+- name: Configure datasource
+    jboss_resource:
+      name: "/subsystem=datasources/data-source=DemoDS"
+      state: present
+      attributes:
+        driver-name: h2
+        connection-url: "jdbc:h2:mem:demo;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+        jndi-name: "java:jboss/datasources/DemoDS"
+        user-name: sa
+        password: sa
+        min-pool-size: 10
+        max-pool-size: 30
+ ```
+
+```yaml
+- name: Check server-state
+  jboss_cli:
+    command: ":read-attribute(name=server-state)"
+  register: server_state
+  changed_when: False
+
+- name: Reload server
+  jboss_cli:
+    command: ":reload"
+  when: server_state.meta.result == "reload-required"
+```
+
+```yaml
+- name: Download hawt.io
+- maven_artifact:
+    group_id: io.hawt
+    artifact_id: hawtio-web
+    version: 1.5.0
+    extension: war
+    dest: /opt/hawtio.war
+
+- name: Deploy hawt.io
+  jboss_deployment:
+    name: hawtio.war
+    state: present
+    src: /opt/hawtio.war
+```
 
 License
 -------
@@ -93,6 +144,6 @@ Apache-2.0
 Author Information
 ------------------
 
-Jairo Junior (junior.jairo1@gmail.com) - Core committer of a Puppet "Approved" module for JBoss/Wildfly. [biemond/wildfly](https://github.com/biemond/biemond-wildfly)
+Jairo Junior (junior.jairo1@gmail.com) - Core committer of a Puppet Approved module for JBoss/Wildfly. [biemond/wildfly](https://github.com/biemond/biemond-wildfly)
 
 Lots of the ideas employed here are inspired by what I learned developing/maintaining the module above.
