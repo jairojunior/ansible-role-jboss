@@ -49,7 +49,7 @@ jboss_properties:
 Dependencies
 ------------
 
-[jboss-py](https://github.com/jairojunior/jboss-py) and requests(https://github.com/kennethreitz/requests).
+[jboss-py](https://github.com/jairojunior/jboss-py) and [requests](https://github.com/kennethreitz/requests).
 
 Example Playbook
 ----------------
