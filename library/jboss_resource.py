@@ -5,25 +5,11 @@ from jboss.operation_error import OperationError
 from ansible.module_utils.basic import AnsibleModule
 
 
-def intersect(current, desired):
-    managed_state = {}
-
-    for key in desired:
-        current_value = current[key]
-
-        if isinstance(current_value, unicode):
-            current_value = current_value.encode('utf-8')
-
-        managed_state[key] = current_value
-
-    return managed_state
-
-
 def diff(current, desired):
     attributes_diff = {}
 
     for key, value in desired.items():
-        if current[key] == value:
+        if not current[key] == value:
             attributes_diff[key] = value
 
     return attributes_diff
@@ -33,32 +19,23 @@ def present(client, path, attributes):
     exists, current_attributes = client.read(path)
 
     if exists:
-        desired_attributes = attributes
+        changed_attributes = diff(current_attributes, attributes)
 
-        current_managed_attributes = intersect(
-            current_attributes, desired_attributes)
+        if changed_attributes:
+            return True, client.update(path, changed_attributes)
 
-        if current_managed_attributes == desired_attributes:
-            return False, current_attributes
+        return False, current_attributes
 
-        client.update(path,
-                      diff(current_managed_attributes, desired_attributes))
-
-        return True, current_attributes
-
-    client.add(path, attributes)
-    return True, 'Added ' + path
+    return True, client.add(path, attributes)
 
 
 def absent(client, path):
-    exists = client.read(path)
+    exists, _ = client.read(path)
 
     if exists:
-        client.remove(path)
+        return True, client.remove(path)
 
-        return True, 'Removed ' + path
-
-    return False, path + ' is absent'
+    return False, '{} is absent'.format(path)
 
 
 def main():
@@ -67,10 +44,15 @@ def main():
             state=dict(choices=['present', 'absent'], default='present'),
             name=dict(aliases=['path'], required=True, type='str'),
             attributes=dict(required=False, type='dict'),
+            host=dict(type='str', default='127.0.0.1'),
+            port=dict(type='int', default=9990),
         ),
     )
 
-    client = Client('ansible', 'ansible')
+    client = Client(username='ansible',
+                    password='ansible',
+                    host=module.params['host'],
+                    port=module.params['port'])
 
     try:
         state = module.params['state']

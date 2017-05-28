@@ -75,7 +75,7 @@ Domain mode
       jboss_host_config: host-master.xml
       jboss_properties:
           jboss.bind.address.management: 172.17.0.2
-```` 
+```
 
 ```yaml
 - hosts: host_controllers
@@ -136,10 +136,19 @@ Modules examples
     src: /opt/hawtio.war
 ```
 
+Remote management
+-----------------
+
+If you don't have access to your Domain Controller or Standalone instances and still want to manage it, just make sure to point `jboss_resource` and `jboss_deployment` tasks to your host(s) using `host` parameter. You can even use Ansible inventory capabilities. :)
+
+Create something like: [remote_management.yml](./remote_management.yml)
+
+Then: `ansible-playbook remote_management.yml --ask-sudo-pass`
+
 License
 -------
 
-Apache-2.0
+[Apache-2.0](./LICENSE)
 
 Author Information
 ------------------

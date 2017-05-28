@@ -22,26 +22,22 @@ def read_deployment(client, name):
 
 def present(client, name, src):
     exists, current_checksum = read_deployment(client, name)
-    if exists:
-        desired_checksum = checksum(src)
 
-        if current_checksum == desired_checksum:
+    if exists:
+        if current_checksum == checksum(src):
             return False, current_checksum
 
-        client.update_deployment(name, src)
-        return True, desired_checksum
+        return True, client.update_deployment(name, src)
 
-    client.deploy(name, src)
-    return True, 'Deployed ' + name
+    return True, client.deploy(name, src)
 
 
 def absent(client, name):
-    exists = read_deployment(client, name)
+    exists, _ = read_deployment(client, name)
     if exists:
-        client.undeploy(name)
-        return True, 'Removed ' + name
+        return True, client.undeploy(name)
 
-    return False, 'Deployment absent ' + name
+    return False, 'Deployment {} is absent'.format(name)
 
 
 def main():
@@ -49,11 +45,16 @@ def main():
         argument_spec=dict(
             state=dict(choices=['present', 'absent'], default='present'),
             name=dict(required=True, type='str'),
-            src=dict(required=True, type='str'),
+            src=dict(required=False, type='str'),
+            host=dict(type='str', default='127.0.0.1'),
+            port=dict(type='int', default=9990),
         ),
     )
 
-    client = Client('ansible', 'ansible')
+    client = Client(username='ansible',
+                    password='ansible',
+                    host=module.params['host'],
+                    port=module.params['port'])
 
     try:
         state = module.params['state']
