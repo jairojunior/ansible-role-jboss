@@ -6,7 +6,7 @@
 
     - name: jboss-py
       pip:
-        name: https://github.com/jairojunior/jboss-py/archive/master.zip
+        name: name: https://github.com/jairojunior/jboss-py/archive/master.zip
 
     - name: Configure datasource
       jboss_resource:
@@ -25,11 +25,28 @@
     - debug:
         msg: "{{ result }}"
 
-    - name: Undeploy hawt.io
+    - name: Download cluster-demo
+      get_url:
+        url: https://github.com/jairojunior/wildfly-ha-tcpgossip-vagrant-puppet/raw/master/cluster-demo.war
+        dest: /tmp/cluster-demo.war
+        checksum: sha256:6d837d89d848660067bc6bc6d97032f66179141d736e6aacebd394578a87f61c
+
+    - name: Deploy cluster-demo
       jboss_deployment:
-        name: hawtio.war
-        state: absent
+        name: cluster-demo.war
+        state: present
+        remote_src: False
+        src: /tmp/cluster-demo.war
       register: deploy
 
     - debug:
         msg: "{{  deploy }}"
+
+    - name: Undeploy hawt.io
+      jboss_deployment:
+        name: hawtio.war
+        state: absent
+      register: undeploy
+
+    - debug:
+        msg: "{{  undeploy }}"

@@ -20,16 +20,16 @@ def read_deployment(client, name):
     return exists, result
 
 
-def present(client, name, src):
+def present(client, name, src, remote_src):
     exists, current_checksum = read_deployment(client, name)
 
     if exists:
         if current_checksum == checksum(src):
             return False, current_checksum
 
-        return True, client.update_deployment(name, src)
+        return True, client.update_deploy(name, src, remote_src)
 
-    return True, client.deploy(name, src)
+    return True, client.deploy(name, src, remote_src)
 
 
 def absent(client, name):
@@ -46,6 +46,7 @@ def main():
             state=dict(choices=['present', 'absent'], default='present'),
             name=dict(required=True, type='str'),
             src=dict(required=False, type='str'),
+            remote_src=dict(type='bool', default=False),
             host=dict(type='str', default='127.0.0.1'),
             port=dict(type='int', default=9990),
         ),
@@ -60,7 +61,10 @@ def main():
         state = module.params['state']
         if state == 'present':
             has_changed, result = present(
-                client, module.params['name'], module.params['src'])
+                client,
+                module.params['name'],
+                module.params['src'],
+                module.params['remote_src'])
         else:
             has_changed, result = absent(client, module.params['name'])
 

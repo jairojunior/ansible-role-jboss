@@ -87,6 +87,7 @@
         name: hawtio.war
         state: present
         src: /opt/hawtio.war
+        remote_src: True
       register: deploy
 
     - debug:
