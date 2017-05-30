@@ -81,38 +81,53 @@ def diff(current, desired):
     return attributes_diff
 
 
-def present(client, path, attributes):
-    exists, current_attributes = client.read(path)
-
+def present(module, client, path, desired_attributes, exists, current_attributes):
     if exists:
-        changed_attributes = diff(current_attributes, attributes)
+        changed_attributes = diff(current_attributes, desired_attributes)
 
-        if changed_attributes:
-            return True, client.update(path, changed_attributes)
+        if not changed_attributes:
+            module.exit_json(changed=False,
+                             msg='{0} exists with {1}'.format(path, current_attributes))
 
-        return False, current_attributes
+        if not module.check_mode:
+            module.exit_json(changed=True,
+                             msg='Updated {0} of {1}'.format(changed_attributes, path),
+                             meta=client.update(path, changed_attributes))
 
-    return True, client.add(path, attributes)
+        module.exit_json(changed=True,
+                         diff=dict(before=current_attributes, after=desired_attributes))
+
+    if not module.check_mode:
+        module.exit_json(changed=True,
+                         meta=client.add(path, desired_attributes),
+                         msg='Added {0} with {1}'.format(path, desired_attributes))
+
+    module.exit_json(changed=True,
+                     diff=dict(before=current_attributes, after=desired_attributes))
 
 
-def absent(client, path):
-    exists, _ = client.read(path)
-
+def absent(module, client, path, exists):
     if exists:
-        return True, client.remove(path)
+        if not module.check_mode:
+            module.exit_json(changed=True,
+                             msg='Removed ' + path,
+                             meta=client.remove(path))
 
-    return False, '{} is absent'.format(path)
+        module.exit_json(changed=True, msg='Resouce exists')
+
+    module.exit_json(changed=False, msg=path + ' is absent')
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(choices=['present', 'absent'], default='present'),
             name=dict(aliases=['path'], required=True, type='str'),
+            state=dict(choices=['present', 'absent'], default='present'),
             attributes=dict(required=False, type='dict'),
             host=dict(type='str', default='127.0.0.1'),
             port=dict(type='int', default=9990),
         ),
+        supports_check_mode=True
     )
 
     if not HAS_JBOSS_PY:
@@ -124,14 +139,16 @@ def main():
                     port=module.params['port'])
 
     try:
+        path = module.params['name']
+        attributes = module.params['attributes']
         state = module.params['state']
-        if state == 'present':
-            has_changed, result = present(
-                client, module.params['name'], module.params['attributes'])
-        else:
-            has_changed, result = absent(client, module.params['name'])
 
-        module.exit_json(changed=has_changed, meta=result)
+        exists, current_attributes = client.read(path)
+
+        if state == 'present':
+            present(module, client, path, attributes, exists, current_attributes)
+        else:
+            absent(module, client, path, exists)
     except OperationError as err:
         module.fail_json(msg=str(err))
 

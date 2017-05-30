@@ -45,7 +45,8 @@ EXAMPLES = '''
 # Deploy app.jar (already present in remote host)
 - jboss_deployment:
     name: app.jar
-    state: absent
+    state: present
+    src: /tmp/app.jar
     remote_src: True
 '''
 
@@ -70,36 +71,50 @@ def read_deployment(client, name):
     return exists, result
 
 
-def present(client, name, src, remote_src, checksum_src):
-    exists, current_checksum = read_deployment(client, name)
-
+def present(module, client, name, src, remote_src, checksum_src, exists, current_checksum):
     if exists:
         if current_checksum == checksum_src:
-            return False, current_checksum
+            module.exit_json(changed=False,
+                             meta='Deployment {0} exists with {1}'.format(name, current_checksum))
 
-        return True, client.update_deploy(name, src, remote_src)
+        if not module.check_mode:
+            module.exit_json(changed=True,
+                             meta=client.update_deploy(name, src, remote_src),
+                             msg='Update deployment {0} content with {1}. Previous content checksum {2}'.format(name, checksum_src, current_checksum))
 
-    return True, client.deploy(name, src, remote_src)
+        module.exit_json(changed=True, diff=dict(before=current_checksum, after=checksum_src))
+
+    if not module.check_mode:
+        module.exit_json(changed=True,
+                         meta=client.deploy(name, src, remote_src),
+                         msg='Deployed {0}'.format(name))
+
+    module.exit_json(changed=True, diff=dict(before='', after=checksum_src))
 
 
-def absent(client, name):
-    exists, _ = read_deployment(client, name)
+def absent(module, client, name, exists):
     if exists:
-        return True, client.undeploy(name)
+        if not module.check_mode:
+            module.exit_json(changed=True,
+                             meta=client.undeploy(name),
+                             msg='Undeployed {0}'.format(name))
 
-    return False, 'Deployment {} is absent'.format(name)
+        module.exit_json(changed=True, msg='Deployment exists')
+
+    module.exit_json(changed=False, msg='Deployment {0} is absent'.format(name))
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(choices=['present', 'absent'], default='present'),
             name=dict(required=True, type='str'),
+            state=dict(choices=['present', 'absent'], default='present'),
             src=dict(required=False, type='str'),
             remote_src=dict(type='bool', default=False),
             host=dict(type='str', default='127.0.0.1'),
             port=dict(type='int', default=9990),
         ),
+        supports_check_mode=True
     )
 
     if not HAS_JBOSS_PY:
@@ -111,18 +126,18 @@ def main():
                     port=module.params['port'])
 
     try:
+        name = module.params['name']
         state = module.params['state']
-        if state == 'present':
-            has_changed, result = present(
-                client,
-                module.params['name'],
-                module.params['src'],
-                module.params['remote_src'],
-                module.sha1(module.params['src']))
-        else:
-            has_changed, result = absent(client, module.params['name'])
+        src = module.params['src']
+        checksum_src = module.sha1(src)
+        remote_src = module.params['remote_src']
 
-        module.exit_json(changed=has_changed, meta=result)
+        exists, current_checksum = read_deployment(client, name)
+
+        if state == 'present':
+            present(module, client, name, src, remote_src, checksum_src, exists, current_checksum)
+        else:
+            absent(module, client, name, exists)
     except OperationError as err:
         module.fail_json(msg=str(err))
 
