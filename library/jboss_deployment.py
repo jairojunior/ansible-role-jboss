@@ -1,13 +1,63 @@
 #!/usr/bin/python
 
-import hashlib
-from jboss.client import Client
-from jboss.operation_error import OperationError
+
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'metadata_version': '1.0'}
+
+DOCUMENTATION = '''
+---
+module: jboss_deployment
+short_description: Manage JBoss deployments
+description:
+    - Manages JBoss deployments through Management API, using local or remote artifacts and ensuring deployed content checksum matches source file checksum.
+author: "Jairo Junior (@jairojunior)"
+options:
+    name:
+      description: Name of deployment unit.
+      required: true
+    state:
+      description: Whether the deployment should be present or absent.
+      required: false
+      default: present
+      choices: [present, absent]
+    src:
+      description: Local or remote path of deployment file.
+      required: false
+    remote_src:
+      description: If False, it will search for src at originating/master machine, if True it will go to the remote/target machine for the src. Default is False.
+      required: false
+      default: false
+'''
+
+EXAMPLES = '''
+# Undeploy hawt.io
+- jboss_deployment:
+    name: hawtio.war
+    state: absent
+
+# Deploy hawt.io (uploads src from local)
+- jboss_deployment:
+    name: hawtio.war
+    src: /opt/hawtio.war
+    state: present
+
+# Deploy app.jar (already present in remote host)
+- jboss_deployment:
+    name: app.jar
+    state: absent
+    remote_src: True
+'''
+
+
+try:
+    from jboss.client import Client
+    from jboss.operation_error import OperationError
+    HAS_JBOSS_PY = True
+except ImportError:
+    HAS_JBOSS_PY = False
+
 from ansible.module_utils.basic import AnsibleModule
-
-
-def checksum(src):
-    return hashlib.sha1(open(src).read()).hexdigest()
 
 
 def read_deployment(client, name):
@@ -20,11 +70,11 @@ def read_deployment(client, name):
     return exists, result
 
 
-def present(client, name, src, remote_src):
+def present(client, name, src, remote_src, checksum_src):
     exists, current_checksum = read_deployment(client, name)
 
     if exists:
-        if current_checksum == checksum(src):
+        if current_checksum == checksum_src:
             return False, current_checksum
 
         return True, client.update_deploy(name, src, remote_src)
@@ -52,6 +102,9 @@ def main():
         ),
     )
 
+    if not HAS_JBOSS_PY:
+        module.fail_json(msg='jboss-py required for this module')
+
     client = Client(username='ansible',
                     password='ansible',
                     host=module.params['host'],
@@ -64,7 +117,8 @@ def main():
                 client,
                 module.params['name'],
                 module.params['src'],
-                module.params['remote_src'])
+                module.params['remote_src'],
+                module.sha1(module.params['src']))
         else:
             has_changed, result = absent(client, module.params['name'])
 
