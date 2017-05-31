@@ -1,7 +1,10 @@
 - hosts: 127.0.0.1
   connection: local
-  become: yes
-  become_user: root
+  environment:
+    JBOSS_MANAGEMENT_USER: ansible
+    JBOSS_MANAGEMENT_PASSWORD: ansible
+    JBOSS_MANAGEMENT_HOST: "127.0.0.1"
+    JBOSS_MANAGEMENT_PORT: 9990
   tasks:
 
     - name: jboss-py

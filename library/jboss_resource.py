@@ -41,24 +41,35 @@ attributes:
   min-pool-size: 20
   max-pool-size: 40
 
-# Configure TLS
+# TLSRealm
 jboss_resource:
-  name: /core-service=management/security-realm=TLSRealm
+name: "/core-service=management/security-realm=TLSRealm"
 
+# Server identity
 jboss_resource:
-  name: /core-service=management/security-realm=TLSRealm/server-identity=tls
-  attributes:
-    keystore-path: '/etc/pki/tls/jboss.jks'
-    keystore-password: changeit
-    alias: demo
-    key-password: changeit
+name: "/core-service=management/security-realm=TLSRealm/server-identity=ssl"
+attributes:
+  keystore-path: jboss.jks
+  keystore-relative-to: /etc/pki/java
+  keystore-password: changeit
+  alias: demo
+  key-password: changeit
 
+# HTTPS Listener
 jboss_resource:
-  name: /subsystem=undertow/server=default-server/https-listener=https
-  attributes:
-    socket-binding: https
-    security-realm: TLSRealm
-    enabled: true
+name: "/subsystem=undertow/server=default-server/https-listener=https"
+attributes:
+  socket-binding: https
+  security-realm: TLSRealm
+  enabled: true
+'''
+
+RETURN = '''
+meta:
+    description: Management API response
+    returned: success
+    type: dict
+    sample:"{'outcome': 'success', 'response-headers': {'process-state': 'reload-required'}}"
 '''
 
 try:
@@ -69,6 +80,7 @@ except ImportError:
     HAS_JBOSS_PY = False
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 
 
 def diff(current, desired):
@@ -123,9 +135,11 @@ def main():
         argument_spec=dict(
             name=dict(aliases=['path'], required=True, type='str'),
             state=dict(choices=['present', 'absent'], default='present'),
-            attributes=dict(required=False, type='dict'),
-            host=dict(type='str', default='127.0.0.1'),
-            port=dict(type='int', default=9990),
+            attributes=dict(required=False, type='dict', default=dict()),
+            username=dict(type='str', fallback=(env_fallback, ['JBOSS_MANAGEMENT_USER'])),
+            password=dict(no_log=True, type='str', fallback=(env_fallback, ['JBOSS_MANAGEMENT_PASSWORD'])),
+            host=dict(type='str', default='127.0.0.1', fallback=(env_fallback, ['JBOSS_MANAGEMENT_HOST'])),
+            port=dict(type='int', default=9990, fallback=(env_fallback, ['JBOSS_MANAGEMENT_PORT']))
         ),
         supports_check_mode=True
     )
@@ -133,10 +147,10 @@ def main():
     if not HAS_JBOSS_PY:
         module.fail_json(msg='jboss-py required for this module')
 
-    client = Client(username='ansible',
-                    password='ansible',
-                    host=module.params['host'],
-                    port=module.params['port'])
+    client = Client(module.params['username'],
+                    module.params['password'],
+                    module.params['host'],
+                    module.params['port'])
 
     try:
         path = module.params['name']

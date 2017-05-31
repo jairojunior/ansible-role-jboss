@@ -35,6 +35,10 @@
   environment:
     JAVA_HOME: /opt/jdk1.8.0_131/
     PATH: "/opt/wildfly/bin:/bin:/usr/bin:/sbin"
+    JBOSS_MANAGEMENT_USER: ansible
+    JBOSS_MANAGEMENT_PASSWORD: ansible
+    JBOSS_MANAGEMENT_HOST: "127.0.0.1"
+    JBOSS_MANAGEMENT_PORT: 9990
   tasks:
     - name: Python pip
       apt:

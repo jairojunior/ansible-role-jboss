@@ -50,6 +50,14 @@ EXAMPLES = '''
     remote_src: True
 '''
 
+RETURN = '''
+meta:
+    description: Management API response
+    returned: success
+    type: dict
+    sample:"{'outcome': 'success', 'response-headers': {'process-state': 'reload-required'}}"
+'''
+
 
 try:
     from jboss.client import Client
@@ -59,6 +67,7 @@ except ImportError:
     HAS_JBOSS_PY = False
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 
 
 def read_deployment(client, name):
@@ -111,8 +120,10 @@ def main():
             state=dict(choices=['present', 'absent'], default='present'),
             src=dict(required=False, type='str'),
             remote_src=dict(type='bool', default=False),
-            host=dict(type='str', default='127.0.0.1'),
-            port=dict(type='int', default=9990),
+            username=dict(type='str', fallback=(env_fallback, ['JBOSS_MANAGEMENT_USER'])),
+            password=dict(no_log=True, type='str', fallback=(env_fallback, ['JBOSS_MANAGEMENT_PASSWORD'])),
+            host=dict(type='str', default='127.0.0.1', fallback=(env_fallback, ['JBOSS_MANAGEMENT_HOST'])),
+            port=dict(type='int', default=9990, fallback=(env_fallback, ['JBOSS_MANAGEMENT_PORT']))
         ),
         supports_check_mode=True
     )
@@ -120,10 +131,10 @@ def main():
     if not HAS_JBOSS_PY:
         module.fail_json(msg='jboss-py required for this module')
 
-    client = Client(username='ansible',
-                    password='ansible',
-                    host=module.params['host'],
-                    port=module.params['port'])
+    client = Client(module.params['username'],
+                    module.params['password'],
+                    module.params['host'],
+                    module.params['port'])
 
     try:
         name = module.params['name']
