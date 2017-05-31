@@ -1,4 +1,20 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -12,6 +28,7 @@ short_description: Manage JBoss deployments
 description:
     - Manages JBoss deployments through Management API, using local or remote artifacts and ensuring deployed content checksum matches source file checksum.
 author: "Jairo Junior (@jairojunior)"
+version_added: 2.4
 options:
     name:
       description: Name of deployment unit.
@@ -28,6 +45,18 @@ options:
       description: If False, it will search for src at originating/master machine, if True it will go to the remote/target machine for the src. Default is False.
       required: false
       default: false
+    username:
+      description:
+        - JBoss Management User. This option can be omitted if the environment variable C(JBOSS_MANAGEMENT_USER) is set.
+    password:
+      description:
+        - JBoss Management Password. This option can be omitted if the environment variable C(JBOSS_MANAGEMENT_PASSWORD) is set.
+    host:
+      description:
+        - JBoss Management Host. This option can be omitted if the environment variable C(JBOSS_MANAGEMENT_HOST) is set.
+    port:
+      description:
+        - JBoss Management Port. This option can be omitted if the environment variable C(JBOSS_MANAGEMENT_PORT) is set.
 '''
 
 EXAMPLES = '''
@@ -51,11 +80,12 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+---
 meta:
     description: Management API response
     returned: success
     type: dict
-    sample:"{'outcome': 'success', 'response-headers': {'process-state': 'reload-required'}}"
+    sample: "{'outcome': 'success', 'response-headers': {'process-state': 'reload-required'}}"
 '''
 
 
@@ -122,8 +152,8 @@ def main():
             remote_src=dict(type='bool', default=False),
             username=dict(type='str', fallback=(env_fallback, ['JBOSS_MANAGEMENT_USER'])),
             password=dict(no_log=True, type='str', fallback=(env_fallback, ['JBOSS_MANAGEMENT_PASSWORD'])),
-            host=dict(type='str', default='127.0.0.1', fallback=(env_fallback, ['JBOSS_MANAGEMENT_HOST'])),
-            port=dict(type='int', default=9990, fallback=(env_fallback, ['JBOSS_MANAGEMENT_PORT']))
+            host=dict(type='str', fallback=(env_fallback, ['JBOSS_MANAGEMENT_HOST'])),
+            port=dict(type='int', fallback=(env_fallback, ['JBOSS_MANAGEMENT_PORT']))
         ),
         supports_check_mode=True
     )
