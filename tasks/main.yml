@@ -63,6 +63,20 @@
   notify:
     - restart jboss
 
+- name: Update remote secret
+  replace:
+    path: "{{ jboss_home }}/domain/configuration/host-slave.xml"
+    regexp: 'c2xhdmVfdXNlcl9wYXNzd29yZA=='
+    replace: '${jboss.domain.slave.password}'
+  when: jboss_mode == "domain" and jboss_host_config == "host-slave.xml"
+
+- name: Update remote username
+  replace:
+    path: "{{ jboss_home }}/domain/configuration/host-slave.xml"
+    regexp: '<remote security-realm="ManagementRealm">'
+    replace: '<remote security-realm="ManagementRealm" username="${jboss.domain.slave.username}">'
+  when: jboss_mode == "domain" and jboss_host_config == "host-slave.xml"
+
 - name: JBoss sysvinit script
   file:
     path: "/etc/init.d/{{ jboss_service }}"

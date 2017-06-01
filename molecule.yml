@@ -7,7 +7,7 @@ docker:
   containers:
     - name: ubuntu-1404
       ansible_groups:
-      - group1
+      - standalone
       image: ubuntu
       image_version: 14.04
 vagrant:
@@ -23,8 +23,24 @@ vagrant:
         memory: 1024
         cpus: 2
   instances:
-    - name: jboss
+    - name: jboss-standalone
       ansible_groups:
-        - group1
+        - standalone
+    - name: jboss-dc
+      ansible_groups:
+        - domain_controller
+      interfaces:
+        - network_name: private_network
+          type: static
+          ip: 10.255.0.10
+          auto_config: true
+    - name: jboss-hc
+      ansible_groups:
+        - host_controller
+      interfaces:
+        - network_name: private_network
+          type: static
+          ip: 10.255.0.20
+          auto_config: true
 verifier:
   name: testinfra

@@ -27,11 +27,11 @@
         creates: /opt/jdk1.8.0_131/
         remote_src: yes
 
-- hosts: all
+- hosts: standalone
   roles:
     - role: ansible-role-jboss
 
-- hosts: all
+- hosts: standalone
   environment:
     JAVA_HOME: /opt/jdk1.8.0_131/
     PATH: "/opt/wildfly/bin:/bin:/usr/bin:/sbin"
@@ -96,3 +96,21 @@
 
     - debug:
         msg: "{{  deploy }}"
+
+- hosts: domain_controller
+  roles:
+    - role: ansible-role-jboss
+      jboss_mode: domain
+      jboss_host_config: host-master.xml
+      jboss_properties:
+          jboss.bind.address.management: '10.255.0.10'
+
+- hosts: host_controller
+  roles:
+    - role: ansible-role-jboss
+      jboss_mode: domain
+      jboss_host_config: host-slave.xml
+      jboss_properties:
+          jboss.domain.master.address: '10.255.0.10'
+          jboss.domain.slave.username: ansible
+          jboss.domain.slave.password: 'YW5zaWJsZQo='

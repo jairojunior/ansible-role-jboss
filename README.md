@@ -49,7 +49,7 @@ jboss_properties:
 Dependencies
 ------------
 
-[jboss-py](https://github.com/jairojunior/jboss-py) and [requests](https://github.com/kennethreitz/requests).
+[jboss-py](https://github.com/jairojunior/jboss-py)
 
 Example Playbook
 ----------------
@@ -83,10 +83,10 @@ Domain mode
     - role: jairojunior.jboss
       jboss_mode: domain
       jboss_host_config: host-slave.xml
-      jboss_remote_username: slave
-      jboss_remote_secret: slave
       jboss_properties:
           jboss.domain.master.address: 172.17.0.2
+          jboss.domain.slave.username: slave
+          jboss.domain.slave.password: "{ 'supersafepassword' | b64encode }}"
 ```
 
 Modules examples
