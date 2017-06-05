@@ -26,21 +26,10 @@ vagrant:
     - name: jboss-standalone
       ansible_groups:
         - standalone
-    - name: jboss-dc
-      ansible_groups:
-        - domain_controller
       interfaces:
         - network_name: private_network
           type: static
           ip: 10.255.0.10
-          auto_config: true
-    - name: jboss-hc
-      ansible_groups:
-        - host_controller
-      interfaces:
-        - network_name: private_network
-          type: static
-          ip: 10.255.0.20
           auto_config: true
 verifier:
   name: testinfra

@@ -30,6 +30,9 @@
 - hosts: standalone
   roles:
     - role: ansible-role-jboss
+      jboss_properties:
+          jboss.bind.address.management: 0.0.0.0
+
 
 - hosts: standalone
   environment:
@@ -58,25 +61,27 @@
           jndi-name: "java:jboss/datasources/DemoDS"
           user-name: sa
           password: sa
-          min-pool-size: 10
-          max-pool-size: 30
+          min-pool-size: 12
+          max-pool-size: 25
       register: result
 
     - debug:
         msg: "{{ result }}"
 
     - name: Check server-state
-      jboss_cli:
-        command: ":read-attribute(name=server-state)"
-      register: server_state
+      jboss_command:
+        operation: read-attribute
+        parameters:
+          name: server-state
       changed_when: False
+      register: server_state
 
     - debug:
         msg: "{{ server_state.meta.result }}"
 
     - name: Reload server
-      jboss_cli:
-        command: ":reload"
+      jboss_command:
+        operation: reload
       when: server_state.meta.result == "reload-required"
 
     - name: Download hawt.io
@@ -96,21 +101,3 @@
 
     - debug:
         msg: "{{  deploy }}"
-
-- hosts: domain_controller
-  roles:
-    - role: ansible-role-jboss
-      jboss_mode: domain
-      jboss_host_config: host-master.xml
-      jboss_properties:
-          jboss.bind.address.management: '10.255.0.10'
-
-- hosts: host_controller
-  roles:
-    - role: ansible-role-jboss
-      jboss_mode: domain
-      jboss_host_config: host-slave.xml
-      jboss_properties:
-          jboss.domain.master.address: '10.255.0.10'
-          jboss.domain.slave.username: ansible
-          jboss.domain.slave.password: 'YW5zaWJsZQo='

@@ -3,13 +3,13 @@
   environment:
     JBOSS_MANAGEMENT_USER: ansible
     JBOSS_MANAGEMENT_PASSWORD: ansible
-    JBOSS_MANAGEMENT_HOST: "127.0.0.1"
+    JBOSS_MANAGEMENT_HOST: "10.255.0.10"
     JBOSS_MANAGEMENT_PORT: 9990
   tasks:
 
     - name: jboss-py
       pip:
-        name: name: https://github.com/jairojunior/jboss-py/archive/master.zip
+        name: https://github.com/jairojunior/jboss-py/archive/master.zip
 
     - name: Configure datasource
       jboss_resource:
