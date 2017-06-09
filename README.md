@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/jairojunior/ansible-role-jboss.svg?branch=master)](https://travis-ci.org/jairojunior/ansible-role-jboss) [![Code Climate](https://codeclimate.com/github/jairojunior/ansible-role-jboss/badges/gpa.svg)](https://codeclimate.com/github/jairojunior/ansible-role-jboss)
+[![Build Status](https://travis-ci.org/jairojunior/ansible-role-jboss.svg?branch=master)](https://travis-ci.org/jairojunior/ansible-role-jboss)
 
 jboss
 =========
