@@ -1,0 +1,2 @@
+---
+jboss_conf_file: "/etc/default/{{ jboss_service }}.conf"

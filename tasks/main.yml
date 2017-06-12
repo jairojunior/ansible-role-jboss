@@ -1,4 +1,10 @@
 ---
+- name: Include values per OS Family
+  include_vars: '{{ item }}'
+  with_first_found:
+    - files:
+        - "{{ ansible_os_family }}.yml"
+
 - name: JBoss OS user
   user:
     name: "{{ jboss_user }}"
@@ -59,7 +65,7 @@
 - name: JBoss init configuration file (JAVA_HOME, JBOSS_CONFIG, etc)
   template:
     src: jboss.conf.j2
-    dest: "/etc/default/{{ jboss_service }}"
+    dest: "{{ jboss_conf_file }}"
   notify:
     - restart jboss
 
