@@ -36,8 +36,6 @@
 
 - hosts: standalone
   environment:
-    JAVA_HOME: /opt/jdk1.8.0_131/
-    PATH: "/opt/wildfly/bin:/bin:/usr/bin:/sbin"
     JBOSS_MANAGEMENT_USER: ansible
     JBOSS_MANAGEMENT_PASSWORD: ansible
     JBOSS_MANAGEMENT_HOST: "127.0.0.1"
@@ -101,3 +99,13 @@
 
     - debug:
         msg: "{{  deploy }}"
+
+    - name: Read datasource
+      jboss_command:
+        operation: read-resource
+        path: "/subsystem=datasources/data-source=ExampleDS"
+      register: datasource
+      changed_when: False
+
+    - debug:
+        msg: "{{  datasource }}"
