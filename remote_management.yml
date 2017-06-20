@@ -6,7 +6,6 @@
     JBOSS_MANAGEMENT_HOST: "10.255.0.10"
     JBOSS_MANAGEMENT_PORT: 9990
   tasks:
-
     - name: jboss-py
       pip:
         name: https://github.com/jairojunior/jboss-py/archive/master.zip
@@ -38,9 +37,22 @@
       jboss_deployment:
         name: cluster-demo.war
         state: present
-        remote_src: False
         src: /tmp/cluster-demo.war
       register: deploy
+
+    - name: Download hawt.io
+      maven_artifact:
+        group_id: io.hawt
+        artifact_id: hawtio-web
+        version: 1.5.0
+        extension: war
+        dest: /opt/hawtio.war
+
+    - name: Deploy hawt.io
+      jboss_deployment:
+        name: hawtio.war
+        state: present
+        src: /opt/hawtio.war
 
     - debug:
         msg: "{{  deploy }}"

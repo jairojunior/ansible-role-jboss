@@ -46,11 +46,6 @@ jboss_properties:
   jboss.ajp.port: 8009
 ```
 
-Dependencies
-------------
-
-[jboss-py](https://github.com/jairojunior/jboss-py)
-
 Example Playbook
 ----------------
 
@@ -89,61 +84,6 @@ Domain mode
           jboss.domain.slave.password: "{ 'supersafepassword' | b64encode }}"
 ```
 
-Modules examples
-----------------
-
- ```yaml
-- name: Configure datasource
-    jboss_resource:
-      name: "/subsystem=datasources/data-source=DemoDS"
-      state: present
-      attributes:
-        driver-name: h2
-        connection-url: "jdbc:h2:mem:demo;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
-        jndi-name: "java:jboss/datasources/DemoDS"
-        user-name: sa
-        password: sa
-        min-pool-size: 10
-        max-pool-size: 30
- ```
-
-```yaml
-- name: Check server-state
-  jboss_cli:
-    command: ":read-attribute(name=server-state)"
-  register: server_state
-  changed_when: False
-
-- name: Reload server
-  jboss_cli:
-    command: ":reload"
-  when: server_state.meta.result == "reload-required"
-```
-
-```yaml
-- name: Download hawt.io
-- maven_artifact:
-    group_id: io.hawt
-    artifact_id: hawtio-web
-    version: 1.5.0
-    extension: war
-    dest: /opt/hawtio.war
-
-- name: Deploy hawt.io
-  jboss_deployment:
-    name: hawtio.war
-    state: present
-    src: /opt/hawtio.war
-```
-
-Remote management
------------------
-
-If you don't have access to your Domain Controller or Standalone instances and still want to manage it, just make sure to point `jboss_resource` and `jboss_deployment` tasks to your host(s) using `host` parameter. You can even use Ansible inventory capabilities. :)
-
-Create something like: [remote_management.yml](./remote_management.yml)
-
-Then: `ansible-playbook remote_management.yml --ask-sudo-pass`
 
 License
 -------
