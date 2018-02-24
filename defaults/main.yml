@@ -1,5 +1,5 @@
 ---
-jboss_java_home: /opt/jdk1.8.0_131/
+jboss_java_home: /opt/jdk1.8.0_161/
 jboss_home: /opt/wildfly
 jboss_user: wildfly
 jboss_group: wildfly

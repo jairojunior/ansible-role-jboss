@@ -5,13 +5,14 @@
     - files:
         - "{{ ansible_os_family }}.yml"
 
-- name: JBoss OS user
-  user:
-    name: "{{ jboss_user }}"
-
 - name: JBoss OS group
   group:
     name: "{{ jboss_group }}"
+
+- name: JBoss OS user
+  user:
+    name: "{{ jboss_user }}"
+    group: "{{ jboss_group }}"
 
 - name: JBoss home dir
   file:
@@ -32,7 +33,7 @@
     creates: "{{ jboss_home }}/jboss-modules.jar"
     owner: "{{ jboss_user }}"
     group: "{{ jboss_group }}"
-    remote_src: yes
+    remote_src: 'yes'
 
 - name: Management Realm user
   lineinfile:
@@ -102,4 +103,4 @@
   service:
     name: "{{ jboss_service }}"
     state: started
-    enabled: yes
+    enabled: 'yes'
