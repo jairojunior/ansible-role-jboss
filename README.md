@@ -17,7 +17,7 @@ The variables that can be passed to this role and a brief description about them
 
 ```yaml
 ---
-jboss_java_home: /opt/jdk1.8.0_131/
+jboss_java_home: /opt/jdk1.8.0_211
 jboss_home: /opt/wildfly
 jboss_user: wildfly
 jboss_group: wildfly

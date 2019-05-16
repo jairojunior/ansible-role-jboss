@@ -16,15 +16,15 @@
 
     - name: Download JDK
       get_url:
-        url: http://download.oracle.com/otn-pub/java/jdk/8u131-b11/d54c1d3a095b4ff2b6607d096fa80163/jdk-8u131-linux-x64.tar.gz
+        url: https://download.oracle.com/otn/java/jdk/8u211-b12/478a62b7d4e34b78b671c754eaaf38ab/jdk-8u211-linux-x64.tar.gz
         headers: "Cookie:oraclelicense=accept-securebackup-cookie"
-        dest: /tmp/jdk-8u131-linux-x64.tar.gz
+        dest: /tmp/jdk-8u211-linux-x64.tar.gz
 
     - name: Extract JDK tarball
       unarchive:
-        src: /tmp/jdk-8u131-linux-x64.tar.gz
+        src: /tmp/jdk-8u211-linux-x64.tar.gz
         dest: /opt
-        creates: /opt/jdk1.8.0_131/
+        creates: /opt/jdk1.8.0_211/
         remote_src: yes
 
 - hosts: standalone
@@ -33,3 +33,4 @@
       jboss_properties:
         jboss.bind.address: "0.0.0.0"
         jboss.bind.address.management: "0.0.0.0"
+
