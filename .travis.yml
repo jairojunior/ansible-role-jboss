@@ -13,5 +13,5 @@ install:
   - pip install docker
   - pip install testinfra --upgrade
 script:
-  - molecule test --driver docker
+  - molecule test --driver-name docker
 
